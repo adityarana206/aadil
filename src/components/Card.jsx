@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import QRCode from 'qrcode.react'
+import QRCode from 'react-qr-code'
 import { Link } from 'react-router-dom'
 
 const PORTFOLIO_URL = typeof window !== 'undefined'
@@ -8,7 +8,6 @@ const PORTFOLIO_URL = typeof window !== 'undefined'
 
 export default function Card() {
   const [showQR, setShowQR] = useState(false)
-  const [activeSection, setActiveSection] = useState('about')
   const qrRef = useRef()
 
   const profile = {
@@ -43,12 +42,25 @@ export default function Card() {
   }
 
   const downloadQR = () => {
-    const canvas = qrRef.current?.querySelector('canvas')
-    if (!canvas) return
-    const link = document.createElement('a')
-    link.href = canvas.toDataURL('image/png')
-    link.download = 'aadil-hannan-portfolio-qr.png'
-    link.click()
+    const svg = qrRef.current?.querySelector('svg')
+    if (!svg) return
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+      const link = document.createElement('a')
+      link.download = 'aadil-hannan-portfolio-qr.png'
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    }
+    img.src = url
   }
 
   return (
@@ -60,9 +72,9 @@ export default function Card() {
           <span className="nav-name">Bloocube</span>
         </div>
         <div className="nav-links">
-          <a href="#about" onClick={() => setActiveSection('about')}>About</a>
-          <a href="#product" onClick={() => setActiveSection('product')}>Product</a>
-          <a href="#contact" onClick={() => setActiveSection('contact')}>Contact</a>
+          <a href="#about">About</a>
+          <a href="#product">Product</a>
+          <a href="#contact">Contact</a>
           <Link to="/qr" className="nav-qr-btn">QR Code</Link>
         </div>
       </nav>
@@ -209,7 +221,6 @@ export default function Card() {
                     value={PORTFOLIO_URL}
                     size={220}
                     level="H"
-                    includeMargin={true}
                     fgColor="#1a237e"
                     bgColor="#ffffff"
                   />

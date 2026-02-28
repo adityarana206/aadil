@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import QRCode from 'qrcode.react'
+import QRCode from 'react-qr-code'
 import { Link } from 'react-router-dom'
 
 const PORTFOLIO_URL = typeof window !== 'undefined'
@@ -10,12 +10,25 @@ export default function QRCodePage() {
   const qrRef = useRef()
 
   const downloadQRCode = () => {
-    const canvas = qrRef.current?.querySelector('canvas')
-    if (!canvas) return
-    const link = document.createElement('a')
-    link.href = canvas.toDataURL('image/png')
-    link.download = 'aadil-hannan-portfolio-qr.png'
-    link.click()
+    const svg = qrRef.current?.querySelector('svg')
+    if (!svg) return
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+      const link = document.createElement('a')
+      link.download = 'aadil-hannan-portfolio-qr.png'
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    }
+    img.src = url
   }
 
   const copyToClipboard = () => {
@@ -60,7 +73,6 @@ export default function QRCodePage() {
                   value={PORTFOLIO_URL}
                   size={280}
                   level="H"
-                  includeMargin={true}
                   fgColor="#1a237e"
                   bgColor="#ffffff"
                 />
